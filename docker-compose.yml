@@ -24,6 +24,15 @@ services:
     networks:
       - backend
 
+  analytics:
+    build:
+      context: ./backend/analytics
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - backend
+
 volumes:
   rabbitmq_data:
 
