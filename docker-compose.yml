@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      # TODO: REMOVE PORTS
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
+
+  emote-generator:
+    build:
+      context: ./backend/emote-generator
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - backend
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  backend: {}
