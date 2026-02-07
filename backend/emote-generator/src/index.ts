@@ -9,18 +9,13 @@
  *  - Configure exchange name with `EXCHANGE` (default: emotes) and routing key
  *    with `ROUTING_KEY` (default: emote.raw).
  *
- * Run:
- * - Test locally with:
- * `docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management`
- * `RABBITMQ_URL=amqp://localhost npm run dev`
- *
  * AI usage declaration: Github Copilot - GPT-5 mini model was used to create comments and
  * docstrings in this file. Also used for finding bugs on ampqlib related code.
  */
 import * as amqp from "amqplib";
 
 // Allow overriding the broker URL from environment for local dev/testing.
-const RABBIT_URL: string = process.env.RABBITMQ_URL || "amqp://rabbitmq";
+const RABBIT_URL: string = "amqp://rabbitmq";
 const EXCHANGE: string = "emotes";
 const ROUTING_KEY: string = "emote.raw";
 
