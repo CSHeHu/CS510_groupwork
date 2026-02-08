@@ -14,6 +14,8 @@
  * Also helped find bugs in the AMQP-related code and provided
  * suggestions on the publishing of aggregated results. AI also helped on typescript
  * type definitions.
+ *
+ * Codesnippets and instructions for ampqlib usage were used from https://www.npmjs.com/package/amqplib
  */
 import * as amqp from "amqplib";
 import { startSettingsApi } from "./api.js";

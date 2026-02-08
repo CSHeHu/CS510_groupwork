@@ -11,6 +11,8 @@
  *
  * AI usage declaration: Github Copilot - GPT-5 mini model was used to create comments and
  * docstrings in this file. Also used for finding bugs on ampqlib related code.
+ *
+ * Codesnippets and instructions for ampqlib usage were used from https://www.npmjs.com/package/amqplib
  */
 import * as amqp from "amqplib";
 
