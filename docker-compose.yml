@@ -6,20 +6,23 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-      # TODO: REMOVE PORTS
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   emote-generator:
     build:
       context: ./backend/emote-generator
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - backend
@@ -28,10 +31,14 @@ services:
     build:
       context: ./backend/analytics
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - backend
+    # TODO: REMOVE PORTS, FOR TESTING ONLY
+    ports:
+      - "3000:3000"
 
 volumes:
   rabbitmq_data:
