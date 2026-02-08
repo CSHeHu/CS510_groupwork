@@ -41,6 +41,18 @@ services:
     # TODO: REMOVE PORTS, FOR TESTING ONLY
     ports:
       - "3000:3000"
+  realtime:
+    build:
+      context: ./backend/realtime
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep 3 && npm start"]
+    networks:
+      - backend
+    ports:
+      - "4000:4000"
 
 volumes:
   rabbitmq_data:

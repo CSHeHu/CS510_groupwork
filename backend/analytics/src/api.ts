@@ -17,9 +17,9 @@ import { Settings } from "./types.js";
  * Exposes REST endpoints to read and modify analysis settings used by the
  * analytics subscriber.
  *
- * @param opts.settings - shared settings object (in-memory)
- * @param opts.port - port to listen on (defaults to 3000)
- * @returns the Express `app` instance (useful for tests)
+ * @param opts.settings - shared settings object
+ * @param opts.port - port to listen on
+ * @returns the Express `app` instance
  */
 export function startSettingsApi(opts: { settings: Settings; port?: number }) {
   const { settings, port } = opts;
