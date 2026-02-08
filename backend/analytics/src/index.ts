@@ -16,6 +16,8 @@
  * type definitions.
  */
 import * as amqp from "amqplib";
+import { startSettingsApi } from "./api.js";
+import { Settings } from "./types.js";
 
 const RABBIT_URL: string = "amqp://rabbitmq";
 const RAW_EXCHANGE: string = "emotes";
@@ -31,12 +33,6 @@ const emoteCounts: {
   [minute: string]: { total: number; counts: { [emote: string]: number } };
 } = {};
 const analyzedMinutes = new Set<string>();
-
-type Settings = {
-  interval: number;
-  threshold: number;
-  allowedEmotes: string[];
-};
 
 // settings
 const settings: Settings = {
@@ -155,6 +151,10 @@ async function analyzeAndPublishMinute(minuteKey: string, ch: amqp.Channel) {
   delete emoteCounts[minuteKey];
 }
 
-// TODO: REST API for updating settings (interval, threshold, allowed emotes)
+// start the API and then the subscriber
+startSettingsApi({
+  settings,
+  port: 3000,
+});
 
 startSubscriber();
