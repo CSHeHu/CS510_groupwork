@@ -24,6 +24,7 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    command: ["sh", "-c", "sleep 3 && npm start"]
     networks:
       - backend
 
@@ -34,6 +35,7 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    command: ["sh", "-c", "sleep 3 && npm start"]
     networks:
       - backend
     # TODO: REMOVE PORTS, FOR TESTING ONLY
