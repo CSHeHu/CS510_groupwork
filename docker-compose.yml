@@ -38,9 +38,6 @@ services:
     command: ["sh", "-c", "sleep 3 && npm start"]
     networks:
       - backend
-    # TODO: REMOVE PORTS, FOR TESTING ONLY
-    ports:
-      - "3000:3000"
   realtime:
     build:
       context: ./backend/realtime
@@ -51,8 +48,19 @@ services:
     command: ["sh", "-c", "sleep 3 && npm start"]
     networks:
       - backend
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    depends_on:
+      - realtime
+      - analytics
+    restart: unless-stopped
+    networks:
+      - backend
     ports:
-      - "4000:4000"
+      - "80:80"
 
 volumes:
   rabbitmq_data:
