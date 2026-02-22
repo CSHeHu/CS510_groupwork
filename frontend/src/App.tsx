@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import IntervalSettings from "./components/IntervalSettings";
 
 type AggregatedMoment = {
   minute: string;
@@ -31,15 +32,20 @@ export default function App() {
 
   return (
     <div>
-      <h1>Significant moments:</h1>
-      <p>Connected to: {WS_URL}</p>
-      <ul>
-        {messages.map((m, i) => (
-          <li key={i}>
-            <strong>{m.minute}</strong> — {JSON.stringify(m.moments)}
-          </li>
-        ))}
-      </ul>
+      <h1>Emote Realtime</h1>
+
+      <IntervalSettings />
+
+      <div>
+        <h2>Realtime Feed:</h2>
+        <ul>
+          {messages.map((m, i) => (
+            <li key={i}>
+              <strong>{m.minute}</strong> — {JSON.stringify(m.moments)}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
