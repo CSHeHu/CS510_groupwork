@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import IntervalSettings from "./components/IntervalSettings";
+import ThresholdSettings from "./components/ThresholdSettings";
 import { EmoteFeed } from "./components/EmoteFeed";
 
 export default function App() {
@@ -7,6 +8,7 @@ export default function App() {
     <div>
       <h1>Emote Realtime</h1>
       <IntervalSettings />
+      <ThresholdSettings />
       <EmoteFeed />
     </div>
   );
