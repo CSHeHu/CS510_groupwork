@@ -30,12 +30,6 @@ const AGG_ROUTING: string = "emote.aggregated";
 // incoming raw messages
 const rawMessages: Array<{ emotes: string[]; timestamp: string }> = [];
 
-// per-minute aggregated counts (map: minute -> { total, counts })
-const emoteCounts: {
-  [minute: string]: { total: number; counts: { [emote: string]: number } };
-} = {};
-const analyzedMinutes = new Set<string>();
-
 // settings
 const settings: Settings = {
   interval: 10, // number of messages to collect before analysis
@@ -71,27 +65,73 @@ async function startSubscriber() {
           // trim if rans too long
           if (rawMessages.length > 10000) rawMessages.shift();
 
-          // slice to minute
-          const minuteKey = new Date(payload.timestamp)
-            .toISOString()
-            .slice(0, 16);
-          // aggregate counts for this minute
-          if (!emoteCounts[minuteKey])
-            emoteCounts[minuteKey] = { total: 0, counts: {} };
-          // count only allowed emotes
-          for (const e of payload.emotes) {
-            if (!settings.allowedEmotes.includes(e)) continue;
-            emoteCounts[minuteKey].counts[e] =
-              (emoteCounts[minuteKey].counts[e] || 0) + 1;
-            emoteCounts[minuteKey].total += 1;
-          }
+          // analyze batch
+          if (rawMessages.length >= settings.interval) {
+            const batch = rawMessages.splice(0, settings.interval);
+            // build per-minute buckets from the batch
+            const buckets: {
+              [minute: string]: {
+                total: number;
+                counts: { [emote: string]: number };
+              };
+            } = {};
 
-          // analyze the minute
-          if (
-            emoteCounts[minuteKey].total >= settings.interval &&
-            !analyzedMinutes.has(minuteKey)
-          )
-            analyzeAndPublishMinute(minuteKey, ch);
+            for (const m of batch) {
+              const minuteKey = new Date(m.timestamp)
+                .toISOString()
+                .slice(0, 16);
+              if (!buckets[minuteKey])
+                buckets[minuteKey] = { total: 0, counts: {} };
+              for (const e of m.emotes) {
+                if (!settings.allowedEmotes.includes(e)) continue;
+                buckets[minuteKey].counts[e] =
+                  (buckets[minuteKey].counts[e] || 0) + 1;
+                buckets[minuteKey].total += 1;
+              }
+            }
+
+            // analyze each minute bucket and publish if significant moments found
+            for (const [minuteKey, bucket] of Object.entries(buckets)) {
+              const total = bucket.total;
+              const moments: Array<{
+                emote: string;
+                count: number;
+                total: number;
+                ratio: number;
+              }> = [];
+
+              for (const [emote, count] of Object.entries(bucket.counts)) {
+                const ratio = total > 0 ? count / total : 0;
+                if (ratio > settings.threshold) {
+                  moments.push({ emote, count, total, ratio });
+                }
+              }
+
+              if (moments.length > 0) {
+                const payloadOut = {
+                  minute: minuteKey,
+                  moments,
+                  generatedAt: new Date().toISOString(),
+                };
+                try {
+                  ch.publish(
+                    AGG_EXCHANGE,
+                    AGG_ROUTING,
+                    Buffer.from(JSON.stringify(payloadOut)),
+                  );
+                  console.log(
+                    "Published significant moments for",
+                    minuteKey,
+                    moments,
+                  );
+                } catch (err) {
+                  console.error("Failed to publish significant moments", err);
+                }
+              } else {
+                console.log("No significant moments for", minuteKey);
+              }
+            }
+          }
         } catch (err) {
           console.warn("Failed to parse message", err);
         }
@@ -102,55 +142,6 @@ async function startSubscriber() {
     console.error("Analytics failed to start subscriber:", err);
     process.exit(1);
   }
-}
-
-// perform analysis and publish aggregated moments to AGG_EXCHANGE
-async function analyzeAndPublishMinute(minuteKey: string, ch: amqp.Channel) {
-  const bucket = emoteCounts[minuteKey];
-  if (!bucket) {
-    console.warn("No data for minute: ", minuteKey);
-    return;
-  }
-  const total = bucket.total;
-  const moments: Array<{
-    emote: string;
-    count: number;
-    total: number;
-    ratio: number;
-  }> = [];
-
-  // find significant moments
-  for (const [emote, count] of Object.entries(bucket.counts)) {
-    const ratio = count / total;
-    if (ratio > settings.threshold) {
-      moments.push({ emote, count, total, ratio });
-    }
-  }
-
-  // publish if there is significant moments
-  if (moments.length > 0) {
-    const payload = {
-      minute: minuteKey,
-      moments,
-      generatedAt: new Date().toISOString(),
-    };
-    try {
-      ch.publish(
-        AGG_EXCHANGE,
-        AGG_ROUTING,
-        Buffer.from(JSON.stringify(payload)),
-      );
-      console.log("Published significant moments for", minuteKey, moments);
-    } catch (err) {
-      console.error("Failed to publish significant moments", err);
-    }
-  } else {
-    console.log("No significant moments for", minuteKey);
-  }
-
-  // mark analyzed and delete old data
-  analyzedMinutes.add(minuteKey);
-  delete emoteCounts[minuteKey];
 }
 
 // start the API and then the subscriber
